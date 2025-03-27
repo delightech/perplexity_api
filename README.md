@@ -54,13 +54,10 @@ PERPLEXITY_TOP_P=0.9
 PERPLEXITY_TOP_K=0
 ```
 
-If you're using the dotenv gem in your application, you can load these variables from a `.env` file:
+You can set these environment variables in your application's environment or use a method of your choice to load them from a `.env` file.
 
 ```ruby
-require 'dotenv'
-Dotenv.load  # Load environment variables from .env file
-
-# Then use the PerplexityApi gem
+# After setting environment variables, use the PerplexityApi gem
 require 'perplexity_api'
 ```
 
