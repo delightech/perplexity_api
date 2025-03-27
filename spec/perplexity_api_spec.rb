@@ -54,22 +54,6 @@ RSpec.describe PerplexityApi do
     end
   end
 
-  describe ".load_env" do
-    before do
-      allow(PerplexityApi).to receive(:load_dotenv)
-    end
-    
-    it "calls load_dotenv with the provided debug_mode" do
-      expect(PerplexityApi).to receive(:load_dotenv).with(debug_mode: true)
-      PerplexityApi.load_env(debug_mode: true)
-    end
-    
-    it "calls load_dotenv with default debug_mode when not provided" do
-      expect(PerplexityApi).to receive(:load_dotenv).with(debug_mode: false)
-      PerplexityApi.load_env
-    end
-  end
-
   describe "API methods" do
     let(:mock_client) { instance_double(PerplexityApi::Client) }
     

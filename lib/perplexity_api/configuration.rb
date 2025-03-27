@@ -2,30 +2,11 @@ module PerplexityApi
   class Configuration
     attr_accessor :api_key, :api_base, :default_model, :default_options, :debug_mode
 
-    def initialize(load_env: true, debug_mode: false)
+    def initialize(debug_mode: false)
       @debug_mode = debug_mode
-      
-      # Load .env file if dotenv is available and load_env is true
-      if load_env
-        load_dotenv
-      end
       
       # Load configuration from environment variables
       load_from_env
-    end
-    
-    def load_dotenv
-      begin
-        require "dotenv"
-        if File.exist?(".env")
-          Dotenv.load
-          debug_log "Loaded .env file"
-        else
-          debug_log ".env file not found"
-        end
-      rescue LoadError
-        debug_log "dotenv gem not available. Install it with: gem install dotenv"
-      end
     end
     
     def load_from_env
@@ -65,9 +46,8 @@ module PerplexityApi
       yield(configuration) if block_given?
     end
     
-    def load_dotenv(debug_mode: false)
+    def reload_env(debug_mode: false)
       configuration.debug_mode = debug_mode
-      configuration.load_dotenv
       configuration.load_from_env
     end
   end

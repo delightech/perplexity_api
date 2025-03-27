@@ -1,8 +1,7 @@
 require "bundler/setup"
-require "dotenv"
-# テスト用の環境変数を読み込む
-test_env_file = File.expand_path("../.env.test", __dir__)
-Dotenv.load(test_env_file) if File.exist?(test_env_file)
+# テスト用の環境変数を設定
+ENV["PERPLEXITY_API_KEY"] ||= "test-api-key"
+ENV["PERPLEXITY_DEFAULT_MODEL"] ||= "sonar"
 require "perplexity_api"
 
 # デバッグモードを無効化

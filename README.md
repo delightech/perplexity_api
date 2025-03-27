@@ -37,28 +37,31 @@ There are multiple ways to configure the API key:
 
 #### 1. Using Environment Variables (Recommended)
 
-The gem will automatically look for environment variables. Create a `.env` file in your project root:
+The gem will automatically look for environment variables:
 
 ```
 PERPLEXITY_API_KEY=your-api-key-here
 ```
 
-A sample `.env.sample` file is included in the repository as a template. Copy it to create your own `.env` file:
-
-```bash
-cp .env.sample .env
-```
-
-Then edit the `.env` file with your actual API key. Make sure to add `.env` to your `.gitignore` file to avoid committing sensitive information.
-
-You can also configure other options via environment variables:
+A sample `.env.sample` file is included in the repository as a template for the environment variables you can use:
 
 ```
+PERPLEXITY_API_KEY=your-api-key-here
 PERPLEXITY_DEFAULT_MODEL=sonar
 PERPLEXITY_TEMPERATURE=0.5
 PERPLEXITY_MAX_TOKENS=2048
 PERPLEXITY_TOP_P=0.9
 PERPLEXITY_TOP_K=0
+```
+
+If you're using the dotenv gem in your application, you can load these variables from a `.env` file:
+
+```ruby
+require 'dotenv'
+Dotenv.load  # Load environment variables from .env file
+
+# Then use the PerplexityApi gem
+require 'perplexity_api'
 ```
 
 #### 2. Using Ruby Configuration
