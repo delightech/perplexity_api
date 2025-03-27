@@ -1,11 +1,14 @@
 require "bundler/setup"
 require "dotenv"
 # テスト用の環境変数を読み込む
-Dotenv.load(File.expand_path("../.env.test", __dir__))
+test_env_file = File.expand_path("../.env.test", __dir__)
+Dotenv.load(test_env_file) if File.exist?(test_env_file)
 require "perplexity_api"
 
-# テスト実行前に環境変数が正しく読み込まれていることを確認
-puts "PERPLEXITY_API_KEY: #{ENV['PERPLEXITY_API_KEY']}"
+# デバッグモードを無効化
+PerplexityApi.configure do |config|
+  config.debug_mode = false
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

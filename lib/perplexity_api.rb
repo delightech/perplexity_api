@@ -2,14 +2,6 @@ require "perplexity_api/version"
 require "perplexity_api/configuration"
 require "perplexity_api/client"
 
-# Load dotenv if available
-begin
-  require "dotenv"
-  Dotenv.load
-rescue LoadError
-  # dotenv is not available, continue without it
-end
-
 module PerplexityApi
   class Error < StandardError; end
   
@@ -28,5 +20,10 @@ module PerplexityApi
   def self.models(api_key: nil)
     client = Client.new(api_key: api_key)
     client.models
+  end
+  
+  # Helper method to explicitly load .env file
+  def self.load_env(debug_mode: false)
+    load_dotenv(debug_mode: debug_mode)
   end
 end

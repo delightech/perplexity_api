@@ -12,6 +12,8 @@ RSpec.describe PerplexityApi::Client do
         @original_api_key = ENV["PERPLEXITY_API_KEY"]
         # 明示的に Configuration をリセット
         allow(PerplexityApi).to receive(:configuration).and_call_original
+        # load_env: false を設定して .env ファイルを読み込まないようにする
+        allow(PerplexityApi::Configuration).to receive(:new).and_call_original
         PerplexityApi.instance_variable_set(:@configuration, nil)
       end
       
@@ -82,7 +84,10 @@ RSpec.describe PerplexityApi::Client do
         ENV.delete("PERPLEXITY_API_KEY")
         # グローバル設定をリセット
         allow(PerplexityApi).to receive(:configuration).and_call_original
-        PerplexityApi.instance_variable_set(:@configuration, nil)
+        # 明示的に新しいConfigurationインスタンスを作成し、APIキーをnilに設定
+        config = PerplexityApi::Configuration.new(load_env: false)
+        config.api_key = nil
+        allow(PerplexityApi).to receive(:configuration).and_return(config)
       end
       
       after do

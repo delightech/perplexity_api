@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 RSpec.describe PerplexityApi::Configuration do
-  let(:configuration) { described_class.new }
+  let(:configuration) { described_class.new(load_env: false) }
   
   describe "#initialize" do
     context "when environment variables are not set" do
@@ -22,7 +22,7 @@ RSpec.describe PerplexityApi::Configuration do
       end
       
       it "sets default values" do
-        new_config = described_class.new
+        new_config = described_class.new(load_env: false)
         expect(new_config.api_key).to be_nil
         expect(new_config.api_base).to eq("https://api.perplexity.ai")
         expect(new_config.default_model).to eq("sonar")
@@ -53,7 +53,7 @@ RSpec.describe PerplexityApi::Configuration do
       end
       
       it "uses environment variables" do
-        new_config = described_class.new
+        new_config = described_class.new(load_env: false)
         expect(new_config.api_key).to eq("env-api-key")
         expect(new_config.api_base).to eq("https://env-api.example.com")
         expect(new_config.default_model).to eq("env-model")
@@ -65,13 +65,81 @@ RSpec.describe PerplexityApi::Configuration do
         )
       end
     end
+    
+    context "with debug_mode enabled" do
+      it "sets debug_mode" do
+        new_config = described_class.new(load_env: false, debug_mode: true)
+        expect(new_config.debug_mode).to be true
+      end
+    end
+  end
+  
+  describe "#load_dotenv" do
+    context "when dotenv is not available" do
+      before do
+        allow(configuration).to receive(:require).with("dotenv").and_raise(LoadError)
+        allow(configuration).to receive(:debug_log)
+      end
+      
+      it "handles the LoadError" do
+        expect { configuration.load_dotenv }.not_to raise_error
+        expect(configuration).to have_received(:debug_log).with("dotenv gem not available. Install it with: gem install dotenv")
+      end
+    end
+    
+    context "when .env file does not exist" do
+      before do
+        allow(configuration).to receive(:require).with("dotenv").and_return(true)
+        allow(File).to receive(:exist?).with(".env").and_return(false)
+        allow(configuration).to receive(:debug_log)
+      end
+      
+      it "logs that the file was not found" do
+        configuration.load_dotenv
+        expect(configuration).to have_received(:debug_log).with(".env file not found")
+      end
+    end
+    
+    context "when .env file exists" do
+      before do
+        allow(configuration).to receive(:require).with("dotenv").and_return(true)
+        allow(File).to receive(:exist?).with(".env").and_return(true)
+        allow(Dotenv).to receive(:load)
+        allow(configuration).to receive(:debug_log)
+      end
+      
+      it "loads the .env file" do
+        configuration.load_dotenv
+        expect(Dotenv).to have_received(:load)
+        expect(configuration).to have_received(:debug_log).with("Loaded .env file")
+      end
+    end
+  end
+  
+  describe "#load_from_env" do
+    before do
+      @original_env = ENV.to_hash
+      ENV["PERPLEXITY_API_KEY"] = "test-api-key"
+      allow(configuration).to receive(:debug_log)
+    end
+    
+    after do
+      ENV.clear
+      @original_env.each { |k, v| ENV[k] = v }
+    end
+    
+    it "loads configuration from environment variables" do
+      configuration.load_from_env
+      expect(configuration.api_key).to eq("test-api-key")
+      expect(configuration).to have_received(:debug_log).with("Configuration loaded from environment variables")
+    end
   end
   
   describe "#validate!" do
     context "when api_key is not set" do
       it "raises an error" do
         # 明示的に API キーを nil に設定
-        config = described_class.new
+        config = described_class.new(load_env: false)
         config.api_key = nil
         expect { config.validate! }.to raise_error(PerplexityApi::Error, "API key is not set.")
       end
@@ -132,6 +200,32 @@ RSpec.describe PerplexityApi do
       expect(config.api_base).to eq("https://custom-api.example.com")
       expect(config.default_model).to eq("custom-model")
       expect(config.default_options[:temperature]).to eq(0.3)
+    end
+  end
+  
+  describe ".load_dotenv" do
+    before do
+      allow(PerplexityApi.configuration).to receive(:debug_mode=)
+      allow(PerplexityApi.configuration).to receive(:load_dotenv)
+      allow(PerplexityApi.configuration).to receive(:load_from_env)
+    end
+    
+    it "sets debug_mode and calls load_dotenv and load_from_env" do
+      PerplexityApi.load_dotenv(debug_mode: true)
+      expect(PerplexityApi.configuration).to have_received(:debug_mode=).with(true)
+      expect(PerplexityApi.configuration).to have_received(:load_dotenv)
+      expect(PerplexityApi.configuration).to have_received(:load_from_env)
+    end
+  end
+  
+  describe ".load_env" do
+    before do
+      allow(PerplexityApi).to receive(:load_dotenv)
+    end
+    
+    it "calls load_dotenv" do
+      PerplexityApi.load_env(debug_mode: true)
+      expect(PerplexityApi).to have_received(:load_dotenv).with(debug_mode: true)
     end
   end
 end
