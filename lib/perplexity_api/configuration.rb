@@ -3,14 +3,14 @@ module PerplexityApi
     attr_accessor :api_key, :api_base, :default_model, :default_options
 
     def initialize
-      @api_key = nil
-      @api_base = "https://api.perplexity.ai"
-      @default_model = "sonar"
+      @api_key = ENV["PERPLEXITY_API_KEY"]
+      @api_base = ENV["PERPLEXITY_API_BASE"] || "https://api.perplexity.ai"
+      @default_model = ENV["PERPLEXITY_DEFAULT_MODEL"] || "sonar"
       @default_options = {
-        temperature: 0.7,
-        max_tokens: 1024,
-        top_p: 0.9,
-        top_k: 0
+        temperature: ENV["PERPLEXITY_TEMPERATURE"] ? ENV["PERPLEXITY_TEMPERATURE"].to_f : 0.7,
+        max_tokens: ENV["PERPLEXITY_MAX_TOKENS"] ? ENV["PERPLEXITY_MAX_TOKENS"].to_i : 1024,
+        top_p: ENV["PERPLEXITY_TOP_P"] ? ENV["PERPLEXITY_TOP_P"].to_f : 0.9,
+        top_k: ENV["PERPLEXITY_TOP_K"] ? ENV["PERPLEXITY_TOP_K"].to_i : 0
       }
     end
 

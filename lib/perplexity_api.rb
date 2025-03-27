@@ -2,6 +2,14 @@ require "perplexity_api/version"
 require "perplexity_api/configuration"
 require "perplexity_api/client"
 
+# Load dotenv if available
+begin
+  require "dotenv"
+  Dotenv.load
+rescue LoadError
+  # dotenv is not available, continue without it
+end
+
 module PerplexityApi
   class Error < StandardError; end
   

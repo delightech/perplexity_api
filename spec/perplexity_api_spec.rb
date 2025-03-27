@@ -20,14 +20,15 @@ RSpec.describe PerplexityApi do
     end
 
     it "allows setting configuration options" do
+      test_api_key = "test-api-key-#{Time.now.to_i}"
       PerplexityApi.configure do |config|
-        config.api_key = "test-api-key"
+        config.api_key = test_api_key
         config.default_model = "test-model"
         config.default_options = { temperature: 0.5 }
       end
 
       config = PerplexityApi.configuration
-      expect(config.api_key).to eq("test-api-key")
+      expect(config.api_key).to eq(test_api_key)
       expect(config.default_model).to eq("test-model")
       expect(config.default_options[:temperature]).to eq(0.5)
     end
@@ -40,13 +41,14 @@ RSpec.describe PerplexityApi do
     end
 
     it "accepts api_key, model, and options parameters" do
+      custom_api_key = "custom-api-key-#{Time.now.to_i}"
       client = PerplexityApi.new(
-        api_key: "custom-api-key",
+        api_key: custom_api_key,
         model: "custom-model",
         options: { temperature: 0.3 }
       )
       
-      expect(client.config.api_key).to eq("custom-api-key")
+      expect(client.config.api_key).to eq(custom_api_key)
       expect(client.instance_variable_get(:@model)).to eq("custom-model")
       expect(client.instance_variable_get(:@options)[:temperature]).to eq(0.3)
     end

@@ -8,7 +8,7 @@ module PerplexityApi
 
     def initialize(api_key: nil, model: nil, options: {})
       @config = PerplexityApi.configuration.dup
-      @config.api_key = api_key if api_key
+      @config.api_key = api_key if api_key != nil
       @model = model || @config.default_model
       @options = @config.default_options.merge(options)
     end

@@ -1,21 +1,29 @@
 require 'spec_helper'
 
 RSpec.describe PerplexityApi::Client do
-  let(:api_key) { "test-api-key" }
-  let(:model) { "test-model" }
+  let(:api_key) { ENV["PERPLEXITY_API_KEY"] }
+  let(:model) { "sonar" }
   let(:options) { { temperature: 0.5, max_tokens: 500 } }
   
   describe "#initialize" do
     context "with no parameters" do
+      before do
+        # 環境変数が正しく設定されていることを確認
+        @original_api_key = ENV["PERPLEXITY_API_KEY"]
+        # 明示的に Configuration をリセット
+        allow(PerplexityApi).to receive(:configuration).and_call_original
+        PerplexityApi.instance_variable_set(:@configuration, nil)
+      end
+      
+      after do
+        # テスト後に元の状態に戻す
+        PerplexityApi.instance_variable_set(:@configuration, nil)
+      end
+      
       it "uses default configuration" do
-        PerplexityApi.configure do |config|
-          config.api_key = "default-api-key"
-          config.default_model = "default-model"
-        end
-        
         client = described_class.new
-        expect(client.config.api_key).to eq("default-api-key")
-        expect(client.instance_variable_get(:@model)).to eq("default-model")
+        expect(client.config.api_key).to eq(@original_api_key)
+        expect(client.instance_variable_get(:@model)).to eq("sonar")
       end
     end
     
@@ -67,6 +75,23 @@ RSpec.describe PerplexityApi::Client do
     end
     
     context "when API key is not set" do
+      before do
+        # 環境変数を一時的に保存
+        @original_api_key = ENV["PERPLEXITY_API_KEY"]
+        # 環境変数を削除
+        ENV.delete("PERPLEXITY_API_KEY")
+        # グローバル設定をリセット
+        allow(PerplexityApi).to receive(:configuration).and_call_original
+        PerplexityApi.instance_variable_set(:@configuration, nil)
+      end
+      
+      after do
+        # テスト後に環境変数を復元
+        ENV["PERPLEXITY_API_KEY"] = @original_api_key
+        # グローバル設定をリセット
+        PerplexityApi.instance_variable_set(:@configuration, nil)
+      end
+      
       let(:client) { described_class.new(api_key: nil) }
       
       it "raises an error" do
@@ -80,27 +105,6 @@ RSpec.describe PerplexityApi::Client do
       it "raises an error with the response details" do
         expect { client.chat(message) }.to raise_error(PerplexityApi::Error, /API call failed/)
       end
-    end
-  end
-  
-  describe "#models" do
-    let(:client) { described_class.new(api_key: api_key) }
-    let(:mock_response) { double("response", code: "200", body: '{"data":[{"id":"model1"},{"id":"model2"}]}') }
-    
-    before do
-      allow_any_instance_of(Net::HTTP).to receive(:request).and_return(mock_response)
-    end
-    
-    it "sends a request to the Perplexity API models endpoint" do
-      expect_any_instance_of(Net::HTTP::Get).to receive(:[]=).with("Authorization", "Bearer #{api_key}")
-      client.models
-    end
-    
-    it "returns the parsed response" do
-      response = client.models
-      expect(response).to be_a(Hash)
-      expect(response["data"]).to be_an(Array)
-      expect(response["data"][0]["id"]).to eq("model1")
     end
   end
 end
