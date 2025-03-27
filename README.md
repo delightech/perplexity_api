@@ -1,8 +1,13 @@
 # PerplexityApi
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/perplexity_api`. To experiment with that code, run `bin/console` for an interactive prompt.
+A Ruby wrapper gem for Perplexity AI's API. This gem allows you to easily integrate Perplexity AI's powerful language models into your Ruby applications.
 
-TODO: Delete this and the text above, and describe your gem
+## Features
+
+- API key can be configured externally
+- Ability to select the latest models
+- Simple interface to send messages and get results
+- Options can be customized or use defaults
 
 ## Installation
 
@@ -14,30 +19,68 @@ gem 'perplexity_api'
 
 And then execute:
 
-    $ bundle
+```
+$ bundle install
+```
 
 Or install it yourself as:
 
-    $ gem install perplexity_api
+```
+$ gem install perplexity_api
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Configuration
+
+To configure the API key:
+
+```ruby
+PerplexityApi.configure do |config|
+  config.api_key = "your-api-key"
+  # Optionally change other settings
+  # config.default_model = "sonar"
+  # config.default_options = { temperature: 0.5, max_tokens: 2048 }
+end
+```
+
+### Basic Usage
+
+The simplest way to send a message and get a response:
+
+```ruby
+response = PerplexityApi.chat("Hello, Perplexity AI!")
+puts response["choices"][0]["message"]["content"]
+```
+
+### Using a Client Instance
+
+For more detailed control, you can create a client instance:
+
+```ruby
+client = PerplexityApi.new(
+  api_key: "your-api-key",  # Optional if already configured
+  model: "sonar",  # Override default model
+  options: {
+    temperature: 0.5,
+    max_tokens: 2048,
+    top_p: 0.9,
+    top_k: 0
+  }
+)
+
+response = client.chat("Enter your complex question here...")
+puts response["choices"][0]["message"]["content"]
+```
+
+## Models
+
+For the most up-to-date list of models, refer to the [Perplexity AI official documentation](https://docs.perplexity.ai/guides/model-cards).
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/perplexity_api. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
-
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the PerplexityApi project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/perplexity_api/blob/master/CODE_OF_CONDUCT.md).
+The gem is available as open source under the terms of the [MIT License](LICENSE.txt).
