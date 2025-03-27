@@ -1,6 +1,7 @@
 # PerplexityApi
 [![Gem Version](https://badge.fury.io/rb/perplexity_api.svg)](https://badge.fury.io/rb/perplexity_api)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
+
 A Ruby wrapper gem for Perplexity AI's API. This gem allows you to easily integrate Perplexity AI's powerful language models into your Ruby applications.
 
 ## Features
