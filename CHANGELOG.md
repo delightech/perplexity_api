@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.0] - 2025-01-07
+## [0.4.0] - 2025-07-07
 
 ### Changed
 - **BREAKING**: Minimum Ruby version requirement updated from 2.6.0 to 3.1.0
