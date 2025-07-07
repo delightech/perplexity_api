@@ -14,7 +14,9 @@ RSpec.describe PerplexityApi do
           temperature: 0.7,
           max_tokens: 1024,
           top_p: 0.9,
-          top_k: 0
+          top_k: 0,
+          frequency_penalty: 0.0,
+          presence_penalty: 0.0
         }
       end
     end
@@ -56,15 +58,32 @@ RSpec.describe PerplexityApi do
 
   describe "API methods" do
     let(:mock_client) { instance_double(PerplexityApi::Client) }
+    let(:mock_stream_client) { instance_double(PerplexityApi::StreamClient) }
     
     before do
       allow(PerplexityApi::Client).to receive(:new).and_return(mock_client)
+      allow(PerplexityApi::StreamClient).to receive(:new).and_return(mock_stream_client)
     end
 
     describe ".chat" do
-      it "delegates to client.chat" do
-        expect(mock_client).to receive(:chat).with("Hello")
-        PerplexityApi.chat("Hello")
+      it "delegates to client.chat with message and options" do
+        expect(mock_client).to receive(:chat).with("Hello", { temperature: 0.5 })
+        PerplexityApi.chat("Hello", options: { temperature: 0.5 })
+      end
+    end
+    
+    describe ".stream" do
+      it "creates a new stream client instance" do
+        client = PerplexityApi.stream(api_key: "test-key")
+        expect(client).to eq(mock_stream_client)
+      end
+    end
+    
+    describe ".stream_chat" do
+      it "delegates to stream client with block" do
+        block = proc { |chunk| puts chunk }
+        expect(mock_stream_client).to receive(:chat).with("Hello", &block)
+        PerplexityApi.stream_chat("Hello", &block)
       end
     end
   end
