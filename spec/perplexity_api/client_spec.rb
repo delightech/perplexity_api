@@ -45,6 +45,7 @@ RSpec.describe PerplexityApi::Client do
   describe "#chat" do
     let(:client) { described_class.new(api_key: api_key) }
     let(:message) { "Hello, Perplexity!" }
+    let(:messages_array) { [{ role: "user", content: message }] }
     let(:expected_body) do
       {
         model: client.instance_variable_get(:@model),
@@ -52,8 +53,10 @@ RSpec.describe PerplexityApi::Client do
         temperature: client.instance_variable_get(:@options)[:temperature],
         max_tokens: client.instance_variable_get(:@options)[:max_tokens],
         top_p: client.instance_variable_get(:@options)[:top_p],
-        top_k: client.instance_variable_get(:@options)[:top_k]
-      }
+        top_k: client.instance_variable_get(:@options)[:top_k],
+        frequency_penalty: client.instance_variable_get(:@options)[:frequency_penalty],
+        presence_penalty: client.instance_variable_get(:@options)[:presence_penalty]
+      }.compact
     end
     
     let(:mock_response) { double("response", code: "200", body: '{"id":"test-id","choices":[{"message":{"content":"Test response"}}]}') }
@@ -107,6 +110,61 @@ RSpec.describe PerplexityApi::Client do
       
       it "raises an error with the response details" do
         expect { client.chat(message) }.to raise_error(PerplexityApi::Error, /API call failed/)
+      end
+    end
+    
+    context "with messages array" do
+      it "accepts an array of messages" do
+        response = client.chat(messages_array)
+        expect(response).to be_a(Hash)
+      end
+    end
+    
+    context "with search options" do
+      let(:search_options) do
+        {
+          search_mode: "web",
+          search_domain_filter: ["wikipedia.org", "-reddit.com"],
+          search_recency_filter: "week",
+          return_images: true,
+          return_related_questions: true
+        }
+      end
+      
+      it "includes search parameters in request" do
+        expected_search_body = expected_body.merge(search_options)
+        expect_any_instance_of(Net::HTTP::Post).to receive(:body=) do |instance, body|
+          parsed_body = JSON.parse(body)
+          expect(parsed_body["search_mode"]).to eq("web")
+          expect(parsed_body["search_domain_filter"]).to eq(["wikipedia.org", "-reddit.com"])
+        end
+        client.chat(message, search_options)
+      end
+    end
+    
+    context "with advanced search filters" do
+      let(:advanced_options) do
+        {
+          search_after_date_filter: "01/01/2024",
+          search_before_date_filter: "12/31/2024",
+          web_search_options: {
+            search_context_size: "high",
+            user_location: {
+              country: "US",
+              latitude: 37.7749,
+              longitude: -122.4194
+            }
+          }
+        }
+      end
+      
+      it "includes advanced search parameters" do
+        expect_any_instance_of(Net::HTTP::Post).to receive(:body=) do |instance, body|
+          parsed_body = JSON.parse(body)
+          expect(parsed_body["search_after_date_filter"]).to eq("01/01/2024")
+          expect(parsed_body["web_search_options"]["search_context_size"]).to eq("high")
+        end
+        client.chat(message, advanced_options)
       end
     end
   end

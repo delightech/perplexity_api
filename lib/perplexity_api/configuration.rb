@@ -17,7 +17,9 @@ module PerplexityApi
         temperature: ENV["PERPLEXITY_TEMPERATURE"] ? ENV["PERPLEXITY_TEMPERATURE"].to_f : 0.7,
         max_tokens: ENV["PERPLEXITY_MAX_TOKENS"] ? ENV["PERPLEXITY_MAX_TOKENS"].to_i : 1024,
         top_p: ENV["PERPLEXITY_TOP_P"] ? ENV["PERPLEXITY_TOP_P"].to_f : 0.9,
-        top_k: ENV["PERPLEXITY_TOP_K"] ? ENV["PERPLEXITY_TOP_K"].to_i : 0
+        top_k: ENV["PERPLEXITY_TOP_K"] ? ENV["PERPLEXITY_TOP_K"].to_i : 0,
+        frequency_penalty: ENV["PERPLEXITY_FREQUENCY_PENALTY"] ? ENV["PERPLEXITY_FREQUENCY_PENALTY"].to_f : 0.0,
+        presence_penalty: ENV["PERPLEXITY_PRESENCE_PENALTY"] ? ENV["PERPLEXITY_PRESENCE_PENALTY"].to_f : 0.0
       }
       
       debug_log "Configuration loaded from environment variables"
