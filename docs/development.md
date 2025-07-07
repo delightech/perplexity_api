@@ -1,81 +1,81 @@
-# Perplexity API Gem Development Documentation
+# Perplexity API Gem 開発ドキュメント
 
-## Overview
+## 概要
 
-This document describes the implementation details of the Perplexity API Ruby gem version 0.3.0, which adds comprehensive support for all Perplexity AI API features.
+このドキュメントは、Perplexity AI APIのすべての機能を包括的にサポートするPerplexity API Ruby gemバージョン0.3.0の実装詳細について説明します。
 
-## Architecture
+## アーキテクチャ
 
-### Core Components
+### コアコンポーネント
 
 1. **Client** (`lib/perplexity_api/client.rb`)
-   - Main interface for synchronous API calls
-   - Handles message formatting and request building
-   - Supports both string and array message inputs
+   - 同期API呼び出しのメインインターフェース
+   - メッセージのフォーマットとリクエストビルドを処理
+   - 文字列と配列の両方のメッセージ入力をサポート
 
 2. **StreamClient** (`lib/perplexity_api/stream_client.rb`)
-   - Handles Server-Sent Events (SSE) streaming
-   - Processes chunked responses in real-time
-   - Implements proper error handling for stream interruptions
+   - Server-Sent Events (SSE)ストリーミングを処理
+   - チャンクレスポンスをリアルタイムで処理
+   - ストリーム中断に対する適切なエラー処理を実装
 
 3. **Configuration** (`lib/perplexity_api/configuration.rb`)
-   - Manages API keys and default settings
-   - Supports environment variable configuration
-   - Provides debug mode for troubleshooting
+   - APIキーとデフォルト設定を管理
+   - 環境変数設定をサポート
+   - トラブルシューティング用のデバッグモードを提供
 
 4. **Models** (`lib/perplexity_api/models.rb`)
-   - Constants for all available models
-   - Grouped by model family (Sonar, Llama, etc.)
-   - Search-related constants
+   - 利用可能なすべてのモデルの定数
+   - モデルファミリー（Sonar、Llamaなど）でグループ化
+   - 検索関連の定数
 
-## Implementation Details
+## 実装詳細
 
-### 1. Streaming Support
+### 1. ストリーミングサポート
 
-The streaming implementation uses Server-Sent Events (SSE) protocol:
+ストリーミング実装はServer-Sent Events (SSE)プロトコルを使用：
 
 ```ruby
-# StreamClient#chat method
+# StreamClient#chatメソッド
 def chat(messages, &block)
-  # Prepare HTTP request with SSE headers
+  # SSEヘッダー付きのHTTPリクエストを準備
   request["Accept"] = "text/event-stream"
   request["Cache-Control"] = "no-cache"
   
-  # Process streaming response
+  # ストリーミングレスポンスを処理
   response.read_body do |chunk|
-    # Parse SSE format: "data: {json}\n"
-    # Handle special "[DONE]" marker
-    # Yield parsed JSON chunks to block
+    # SSE形式をパース: "data: {json}\n"
+    # 特別な"[DONE]"マーカーを処理
+    # パースしたJSONチャンクをブロックにyield
   end
 end
 ```
 
-Key features:
-- Non-blocking chunk processing
-- Automatic JSON parsing
-- Error recovery for malformed chunks
-- Support for all chat parameters
+主な機能：
+- ノンブロッキングチャンク処理
+- 自動JSONパース
+- 不正なチャンクに対するエラー復旧
+- すべてのチャットパラメータをサポート
 
-### 2. Web Search Integration
+### 2. Web検索統合
 
-Web search is implemented through additional request parameters:
+Web検索は追加のリクエストパラメータを通じて実装：
 
 ```ruby
-# Search parameters in build_request_body
-body[:search_mode] = options[:search_mode] # "web" or "academic"
+# build_request_bodyでの検索パラメータ
+body[:search_mode] = options[:search_mode] # "web"または"academic"
 body[:search_domain_filter] = options[:search_domain_filter] # ["domain.com", "-excluded.com"]
 body[:search_recency_filter] = options[:search_recency_filter] # "hour", "day", "week", "month"
 ```
 
-Advanced search features:
-- Date range filtering
-- Location-based search
-- Domain inclusion/exclusion
-- Academic paper search mode
+高度な検索機能：
+- 日付範囲フィルタリング
+- 位置ベース検索
+- ドメインの包含/除外
+- 学術論文検索モード
 
-### 3. Message Array Support
+### 3. メッセージ配列サポート
 
-The gem now supports full conversation history:
+gemは完全な会話履歴をサポート：
 
 ```ruby
 def prepare_messages(messages)
@@ -83,22 +83,22 @@ def prepare_messages(messages)
   when String
     [{ role: "user", content: messages }]
   when Array
-    messages # Pass through for multi-turn conversations
+    messages # マルチターン会話用にパススルー
   else
-    raise ArgumentError, "Messages must be a string or array"
+    raise ArgumentError, "メッセージは文字列または配列である必要があります"
   end
 end
 ```
 
-This enables:
-- System prompts
-- Multi-turn conversations
-- Assistant message history
-- Context preservation
+これにより以下が可能：
+- システムプロンプト
+- マルチターン会話
+- アシスタントメッセージ履歴
+- コンテキストの保持
 
-### 4. Request Building
+### 4. リクエストビルド
 
-The `build_request_body` method constructs API requests with all parameters:
+`build_request_body`メソッドはすべてのパラメータでAPIリクエストを構築：
 
 ```ruby
 def build_request_body(messages, options)
@@ -107,127 +107,127 @@ def build_request_body(messages, options)
     messages: messages
   }
   
-  # Add only non-nil parameters
+  # nil以外のパラメータのみ追加
   body[:temperature] = options[:temperature] if options[:temperature]
   body[:search_mode] = options[:search_mode] if options[:search_mode]
-  # ... other parameters
+  # ... その他のパラメータ
   
   body
 end
 ```
 
-This approach:
-- Avoids sending unnecessary null values
-- Supports all API parameters
-- Maintains backward compatibility
+このアプローチ：
+- 不要なnull値の送信を回避
+- すべてのAPIパラメータをサポート
+- 後方互換性を維持
 
-## API Design Decisions
+## API設計の決定事項
 
-### 1. Backward Compatibility
+### 1. 後方互換性
 
-The gem maintains backward compatibility:
-- `chat(string)` still works for simple queries
-- New `chat(messages, options)` signature for advanced usage
-- Default values preserve existing behavior
+gemは後方互換性を維持：
+- `chat(string)`はシンプルなクエリで引き続き機能
+- 高度な使用のための新しい`chat(messages, options)`シグネチャ
+- デフォルト値が既存の動作を保持
 
-### 2. Streaming Interface
+### 2. ストリーミングインターフェース
 
-Streaming uses Ruby blocks for natural iteration:
+ストリーミングは自然な反復のためにRubyブロックを使用：
 ```ruby
-PerplexityApi.stream_chat("Query") do |chunk|
+PerplexityApi.stream_chat("クエリ") do |chunk|
   print chunk["choices"][0]["delta"]["content"]
 end
 ```
 
-### 3. Configuration Flexibility
+### 3. 設定の柔軟性
 
-Multiple configuration methods:
-- Environment variables (recommended)
-- Ruby configuration block
-- Per-request overrides
+複数の設定方法：
+- 環境変数（推奨）
+- Ruby設定ブロック
+- リクエストごとのオーバーライド
 
-### 4. Error Handling
+### 4. エラーハンドリング
 
-Comprehensive error handling:
-- API errors raise `PerplexityApi::Error`
-- Streaming errors are caught and re-raised
-- Invalid JSON in streams is skipped
+包括的なエラーハンドリング：
+- APIエラーは`PerplexityApi::Error`を発生
+- ストリーミングエラーはキャッチされて再発生
+- ストリーム内の無効なJSONはスキップ
 
-## Testing Strategy
+## テスト戦略
 
-### Unit Tests
+### ユニットテスト
 
-1. **Client Tests** (`spec/perplexity_api/client_spec.rb`)
-   - Request formatting
-   - Parameter handling
-   - Error scenarios
+1. **Clientテスト** (`spec/perplexity_api/client_spec.rb`)
+   - リクエストフォーマット
+   - パラメータ処理
+   - エラーシナリオ
 
-2. **StreamClient Tests** (`spec/perplexity_api/stream_client_spec.rb`)
-   - SSE parsing
-   - Chunk processing
-   - Error recovery
+2. **StreamClientテスト** (`spec/perplexity_api/stream_client_spec.rb`)
+   - SSEパース
+   - チャンク処理
+   - エラー復旧
 
-3. **Configuration Tests** (`spec/perplexity_api/configuration_spec.rb`)
-   - Environment variable loading
-   - Default values
-   - Validation
+3. **Configurationテスト** (`spec/perplexity_api/configuration_spec.rb`)
+   - 環境変数の読み込み
+   - デフォルト値
+   - バリデーション
 
-4. **Model Tests** (`spec/perplexity_api/models_spec.rb`)
-   - Constant definitions
-   - Model groupings
+4. **Modelテスト** (`spec/perplexity_api/models_spec.rb`)
+   - 定数定義
+   - モデルグループ化
 
-### Test Patterns
+### テストパターン
 
-- Mock HTTP responses for predictable testing
-- Stub environment variables for configuration tests
-- Test both success and failure paths
+- 予測可能なテストのためのHTTPレスポンスのモック
+- 設定テストのための環境変数のスタブ
+- 成功と失敗の両方のパスをテスト
 
-## New Features in v0.3.0
+## v0.3.0の新機能
 
-### 1. Streaming Responses
-- Real-time response streaming
-- Server-Sent Events support
-- Chunked transfer encoding
+### 1. ストリーミングレスポンス
+- リアルタイムレスポンスストリーミング
+- Server-Sent Eventsサポート
+- チャンク転送エンコーディング
 
-### 2. Web Search
-- Domain filtering (include/exclude)
-- Date range filters
-- Recency filters (hour/day/week/month)
-- Location-based search
+### 2. Web検索
+- ドメインフィルタリング（包含/除外）
+- 日付範囲フィルタ
+- 最新性フィルタ（時間/日/週/月）
+- 位置ベース検索
 
-### 3. Advanced Models
-- sonar-pro: Enhanced capabilities
-- sonar-deep-research: In-depth analysis
-- All legacy models supported
+### 3. 高度なモデル
+- sonar-pro: 拡張機能
+- sonar-deep-research: 詳細な分析
+- すべてのレガシーモデルをサポート
 
-### 4. Enhanced Parameters
-- frequency_penalty: Reduce repetition
-- presence_penalty: Encourage topic diversity
-- return_images: Get image results (beta)
-- return_related_questions: Get follow-up questions (beta)
+### 4. 拡張パラメータ
+- frequency_penalty: 繰り返しを減らす
+- presence_penalty: トピックの多様性を促進
+- return_images: 画像結果を取得（ベータ）
+- return_related_questions: フォローアップの質問を取得（ベータ）
 
-### 5. Search Modes
-- Web search: General internet search
-- Academic search: Scholarly articles and papers
+### 5. 検索モード
+- Web検索: 一般的なインターネット検索
+- 学術検索: 学術論文と論文
 
-## Usage Examples
+## 使用例
 
-### Basic Chat
+### 基本チャット
 ```ruby
-response = PerplexityApi.chat("Hello, world!")
+response = PerplexityApi.chat("こんにちは、世界！")
 ```
 
-### Streaming
+### ストリーミング
 ```ruby
-PerplexityApi.stream_chat("Tell me a story") do |chunk|
+PerplexityApi.stream_chat("物語を聞かせて") do |chunk|
   print chunk["choices"][0]["delta"]["content"]
 end
 ```
 
-### Web Search
+### Web検索
 ```ruby
 response = PerplexityApi.chat(
-  "Latest AI news",
+  "最新のAIニュース",
   options: {
     search_mode: "web",
     search_recency_filter: "day"
@@ -235,18 +235,18 @@ response = PerplexityApi.chat(
 )
 ```
 
-### Conversation
+### 会話
 ```ruby
 messages = [
-  { role: "system", content: "You are a Ruby expert" },
-  { role: "user", content: "How do I create a gem?" }
+  { role: "system", content: "あなたはRubyのエキスパートです" },
+  { role: "user", content: "gemの作り方を教えてください" }
 ]
 response = PerplexityApi.chat(messages)
 ```
 
-## Environment Variables
+## 環境変数
 
-The gem supports these environment variables:
+gemは以下の環境変数をサポート：
 
 ```
 PERPLEXITY_API_KEY=your-api-key
@@ -259,62 +259,62 @@ PERPLEXITY_FREQUENCY_PENALTY=0.0
 PERPLEXITY_PRESENCE_PENALTY=0.0
 ```
 
-## Performance Considerations
+## パフォーマンスの考慮事項
 
-1. **Streaming**: Reduces memory usage for large responses
-2. **Connection Reuse**: Each request creates new connection (could be optimized)
-3. **JSON Parsing**: Uses built-in JSON parser for efficiency
-4. **Error Recovery**: Graceful handling prevents connection leaks
+1. **ストリーミング**: 大きなレスポンスのメモリ使用量を削減
+2. **接続の再利用**: 各リクエストは新しい接続を作成（最適化可能）
+3. **JSONパース**: 効率のために組み込みJSONパーサーを使用
+4. **エラー復旧**: 優雅な処理により接続リークを防止
 
-## Security Considerations
+## セキュリティの考慮事項
 
-1. **API Key Storage**: Use environment variables, not hardcoded values
-2. **HTTPS Only**: All connections use SSL/TLS
-3. **Input Validation**: Messages are validated before sending
-4. **No Logging**: Sensitive data is not logged
+1. **APIキーの保存**: ハードコードされた値ではなく環境変数を使用
+2. **HTTPSのみ**: すべての接続はSSL/TLSを使用
+3. **入力検証**: 送信前にメッセージを検証
+4. **ログなし**: 機密データはログに記録されない
 
-## Future Enhancements
+## 将来の拡張
 
-Potential improvements for future versions:
+将来のバージョンの潜在的な改善：
 
-1. **Connection Pooling**: Reuse HTTP connections
-2. **Async Support**: Non-blocking API calls
-3. **Rate Limiting**: Built-in rate limit handling
-4. **Retry Logic**: Automatic retry with exponential backoff
-5. **Response Caching**: Optional response caching
-6. **Webhook Support**: If Perplexity adds webhook features
+1. **接続プーリング**: HTTP接続の再利用
+2. **非同期サポート**: ノンブロッキングAPI呼び出し
+3. **レート制限**: 組み込みレート制限処理
+4. **リトライロジック**: 指数バックオフによる自動リトライ
+5. **レスポンスキャッシング**: オプションのレスポンスキャッシング
+6. **Webhookサポート**: PerplexityがWebhook機能を追加した場合
 
-## Contributing
+## コントリビューション
 
-When adding new features:
+新機能を追加する際：
 
-1. Maintain backward compatibility
-2. Add comprehensive tests
-3. Update documentation
-4. Follow Ruby style guidelines
-5. Add examples for new features
+1. 後方互換性を維持
+2. 包括的なテストを追加
+3. ドキュメントを更新
+4. Rubyスタイルガイドラインに従う
+5. 新機能の例を追加
 
-## Debugging
+## デバッグ
 
-Enable debug mode to see configuration details:
+設定の詳細を表示するためにデバッグモードを有効化：
 
 ```ruby
 PerplexityApi.configuration.debug_mode = true
 ```
 
-This will output:
-- Configuration loading details
-- API key status (set/not set)
-- Default model and parameters
+これにより以下が出力されます：
+- 設定読み込みの詳細
+- APIキーステータス（設定済み/未設定）
+- デフォルトモデルとパラメータ
 
-## Release Process
+## リリースプロセス
 
-1. Update version in `lib/perplexity_api/version.rb`
-2. Update CHANGELOG.md
-3. Run tests: `bundle exec rspec`
-4. Build gem: `gem build perplexity_api.gemspec`
-5. Push to RubyGems: `gem push perplexity_api-x.x.x.gem`
+1. `lib/perplexity_api/version.rb`でバージョンを更新
+2. CHANGELOG.mdを更新
+3. テストを実行: `bundle exec rspec`
+4. gemをビルド: `gem build perplexity_api.gemspec`
+5. RubyGemsにプッシュ: `gem push perplexity_api-x.x.x.gem`
 
-## License
+## ライセンス
 
-MIT License - See LICENSE.txt for details
+MITライセンス - 詳細はLICENSE.txtを参照
