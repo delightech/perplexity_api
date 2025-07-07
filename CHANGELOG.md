@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-01-07
+
+### Changed
+- **BREAKING**: Minimum Ruby version requirement updated from 2.6.0 to 3.1.0
+- Updated development dependencies:
+  - Bundler from ~> 1.17 to ~> 2.0
+  - Rake from ~> 10.0 to ~> 13.0
+
+### Tested
+- Verified compatibility with Ruby 3.4.4
+- All 42 tests passing on Ruby 3.1.0+
+
 ## [0.3.0] - 2025-01-07
 
 ### Added
