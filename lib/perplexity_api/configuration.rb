@@ -32,10 +32,44 @@ module PerplexityApi
       raise Error, "API key is not set." unless api_key
     end
     
+    # Public method for safe redaction of sensitive information
+    def safe_redact(message)
+      return message unless message.is_a?(String)
+      
+      # Redact API keys (Bearer tokens)
+      message = message.gsub(/Bearer [a-zA-Z0-9\-_]+/, "Bearer [REDACTED]")
+      
+      # Redact potential API keys in various formats
+      message = message.gsub(/api_key["\s]*[:=]["\s]*[a-zA-Z0-9\-_]+/, 'api_key: [REDACTED]')
+      message = message.gsub(/["\']api_key["\']:\s*["\'][a-zA-Z0-9\-_]+["\']/, '"api_key": "[REDACTED]"')
+      
+      # Redact Authorization headers
+      message = message.gsub(/Authorization["\s]*[:=]["\s]*[a-zA-Z0-9\-_\s]+/, 'Authorization: [REDACTED]')
+      
+      message
+    end
+    
     private
     
     def debug_log(message)
-      puts "[PerplexityApi] #{message}" if @debug_mode
+      puts "[PerplexityApi] #{safe_redact(message)}" if @debug_mode
+    end
+
+    # Safely redact sensitive information for logging
+    def safe_redact(message)
+      return message unless message.is_a?(String)
+      
+      # Redact API keys (Bearer tokens)
+      message = message.gsub(/Bearer [a-zA-Z0-9\-_]+/, "Bearer [REDACTED]")
+      
+      # Redact potential API keys in various formats
+      message = message.gsub(/api_key["\s]*[:=]["\s]*[a-zA-Z0-9\-_]+/, 'api_key: [REDACTED]')
+      message = message.gsub(/["\']api_key["\']:\s*["\'][a-zA-Z0-9\-_]+["\']/, '"api_key": "[REDACTED]"')
+      
+      # Redact Authorization headers
+      message = message.gsub(/Authorization["\s]*[:=]["\s]*[a-zA-Z0-9\-_\s]+/, 'Authorization: [REDACTED]')
+      
+      message
     end
   end
 
