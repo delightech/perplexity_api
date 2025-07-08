@@ -4,6 +4,7 @@ require 'json'
 
 module PerplexityApi
   class Client
+    include RequestBuilder
     attr_reader :config
 
     def initialize(api_key: nil, model: nil, options: {})
@@ -11,6 +12,7 @@ module PerplexityApi
       @config.api_key = api_key if api_key != nil
       @model = model || @config.default_model
       @options = @config.default_options.merge(options)
+      @connection_pool = ConnectionPool.new
     end
 
     # Method to send a message and get a response
@@ -21,74 +23,43 @@ module PerplexityApi
       merged_options = @options.merge(options)
       
       uri = URI.parse("#{@config.api_base}/chat/completions")
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
+      http = @connection_pool.get_connection(uri)
 
       request = Net::HTTP::Post.new(uri.path)
       request["Content-Type"] = "application/json"
       request["Authorization"] = "Bearer #{@config.api_key}"
 
       request_body = build_request_body(messages, merged_options)
-      request.body = request_body.to_json
+      begin
+        request.body = request_body.to_json
+      rescue JSON::GeneratorError => e
+        # Log the JSON generation error for debugging
+        @config.debug_log("JSON generation error for request: #{e.message}")
+        raise Error, "Failed to serialize request body to JSON: #{e.message}"
+      end
 
       response = http.request(request)
       
-      if response.code.to_i == 200
-        JSON.parse(response.body)
+      # Return connection to pool for reuse
+      @connection_pool.return_connection(uri, http)
+      
+      if response.code.to_i == PerplexityApi::HTTP_STATUS_OK
+        begin
+          JSON.parse(response.body)
+        rescue JSON::ParserError => e
+          # Log the JSON parsing error for debugging
+          @config.debug_log("JSON parsing error in response: #{e.message}")
+          @config.debug_log("Response body length: #{response.body.length}")
+          @config.debug_log("Response body preview: #{response.body[0...200]}")
+          raise Error, "Failed to parse API response as JSON: #{e.message}"
+        end
       else
-        raise Error, "API call failed: #{response.code} #{response.body}"
+        # Safely redact sensitive information from error messages
+        safe_error_message = @config.safe_redact(response.body)
+        raise Error, "API call failed: #{response.code} #{safe_error_message}"
       end
     end
 
     private
-
-    def prepare_messages(messages)
-      case messages
-      when String
-        [{ role: "user", content: messages }]
-      when Array
-        messages
-      else
-        raise ArgumentError, "Messages must be a string or array"
-      end
-    end
-
-    def build_request_body(messages, options)
-      body = {
-        model: @model,
-        messages: messages
-      }
-
-      # Basic parameters
-      body[:temperature] = options[:temperature] if options[:temperature]
-      body[:max_tokens] = options[:max_tokens] if options[:max_tokens]
-      body[:top_p] = options[:top_p] if options[:top_p]
-      body[:top_k] = options[:top_k] if options[:top_k]
-      body[:frequency_penalty] = options[:frequency_penalty] if options[:frequency_penalty]
-      body[:presence_penalty] = options[:presence_penalty] if options[:presence_penalty]
-      body[:stream] = options[:stream] if options.key?(:stream)
-
-      # Search parameters
-      body[:search_mode] = options[:search_mode] if options[:search_mode]
-      body[:search_domain_filter] = options[:search_domain_filter] if options[:search_domain_filter]
-      body[:search_recency_filter] = options[:search_recency_filter] if options[:search_recency_filter]
-      body[:search_after_date_filter] = options[:search_after_date_filter] if options[:search_after_date_filter]
-      body[:search_before_date_filter] = options[:search_before_date_filter] if options[:search_before_date_filter]
-      body[:last_updated_after_filter] = options[:last_updated_after_filter] if options[:last_updated_after_filter]
-      body[:last_updated_before_filter] = options[:last_updated_before_filter] if options[:last_updated_before_filter]
-
-      # Beta features
-      body[:return_images] = options[:return_images] if options[:return_images]
-      body[:return_related_questions] = options[:return_related_questions] if options[:return_related_questions]
-
-      # Advanced features
-      body[:reasoning_effort] = options[:reasoning_effort] if options[:reasoning_effort]
-      
-      if options[:web_search_options]
-        body[:web_search_options] = options[:web_search_options]
-      end
-
-      body
-    end
   end
 end
