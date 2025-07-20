@@ -1,6 +1,21 @@
 module PerplexityApi
   module RequestBuilder
     
+    def determine_timeout(options, is_streaming = false)
+      # Priority: explicit timeout > reasoning_effort/search_mode based > config default
+      return options[:timeout] if options[:timeout]
+      
+      # Deep research or high reasoning effort needs more time
+      if options[:reasoning_effort] == 'high'
+        return is_streaming ? 600 : 300  # 10 min for streaming, 5 min for regular
+      elsif options[:search_mode] == 'web'
+        return is_streaming ? 120 : 60   # 2 min for streaming, 1 min for regular
+      else
+        default = @config.default_timeout || 30
+        return is_streaming ? default * 2 : default
+      end
+    end
+    
     def prepare_messages(messages)
       case messages
       when String

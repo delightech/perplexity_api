@@ -12,7 +12,7 @@ module PerplexityApi
       @config.api_key = api_key if api_key != nil
       @model = model || @config.default_model
       @options = @config.default_options.merge(options)
-      @connection_pool = ConnectionPool.new
+      @connection_pool = nil
     end
 
     # Method to send a message and get a response
@@ -21,6 +21,12 @@ module PerplexityApi
       
       messages = prepare_messages(messages)
       merged_options = @options.merge(options)
+      
+      # Determine timeout based on options
+      timeout = determine_timeout(merged_options, false)
+      
+      # Create connection pool with appropriate timeout
+      @connection_pool ||= ConnectionPool.new(timeout: timeout)
       
       uri = URI.parse("#{@config.api_base}/chat/completions")
       http = @connection_pool.get_connection(uri)

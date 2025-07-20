@@ -4,7 +4,7 @@ require 'thread'
 
 module PerplexityApi
   class ConnectionPool
-    def initialize(max_connections: 5, timeout: 5)
+    def initialize(max_connections: 5, timeout: 30)
       @max_connections = max_connections
       @timeout = timeout
       @connections = {}
