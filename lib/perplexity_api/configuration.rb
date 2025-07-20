@@ -1,6 +1,6 @@
 module PerplexityApi
   class Configuration
-    attr_accessor :api_key, :api_base, :default_model, :default_options, :debug_mode
+    attr_accessor :api_key, :api_base, :default_model, :default_options, :debug_mode, :default_timeout
 
     def initialize(debug_mode: false)
       @debug_mode = debug_mode
@@ -21,6 +21,7 @@ module PerplexityApi
         frequency_penalty: ENV["PERPLEXITY_FREQUENCY_PENALTY"] ? ENV["PERPLEXITY_FREQUENCY_PENALTY"].to_f : 0.0,
         presence_penalty: ENV["PERPLEXITY_PRESENCE_PENALTY"] ? ENV["PERPLEXITY_PRESENCE_PENALTY"].to_f : 0.0
       }
+      @default_timeout = ENV["PERPLEXITY_TIMEOUT"] ? ENV["PERPLEXITY_TIMEOUT"].to_i : 30
       
       debug_log "Configuration loaded from environment variables"
       debug_log "API Key: #{@api_key ? 'Set' : 'Not set'}"
@@ -55,22 +56,6 @@ module PerplexityApi
       puts "[PerplexityApi] #{safe_redact(message)}" if @debug_mode
     end
 
-    # Safely redact sensitive information for logging
-    def safe_redact(message)
-      return message unless message.is_a?(String)
-      
-      # Redact API keys (Bearer tokens)
-      message = message.gsub(/Bearer [a-zA-Z0-9\-_]+/, "Bearer [REDACTED]")
-      
-      # Redact potential API keys in various formats
-      message = message.gsub(/api_key["\s]*[:=]["\s]*[a-zA-Z0-9\-_]+/, 'api_key: [REDACTED]')
-      message = message.gsub(/["\']api_key["\']:\s*["\'][a-zA-Z0-9\-_]+["\']/, '"api_key": "[REDACTED]"')
-      
-      # Redact Authorization headers
-      message = message.gsub(/Authorization["\s]*[:=]["\s]*[a-zA-Z0-9\-_\s]+/, 'Authorization: [REDACTED]')
-      
-      message
-    end
   end
 
   class << self

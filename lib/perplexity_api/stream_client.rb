@@ -13,13 +13,19 @@ module PerplexityApi
       @config.api_key = api_key if api_key != nil
       @model = model || @config.default_model
       @options = @config.default_options.merge(options)
-      @connection_pool = ConnectionPool.new(max_connections: 2, timeout: 10) # Fewer connections for streaming
+      @connection_pool = nil
     end
 
     def chat(messages, &block)
       @config.validate!
       
       messages = prepare_messages(messages)
+      
+      # Determine timeout based on options
+      timeout = determine_timeout(@options, true)
+      
+      # Create connection pool with appropriate timeout
+      @connection_pool ||= ConnectionPool.new(max_connections: 2, timeout: timeout)
       
       uri = URI.parse("#{@config.api_base}/chat/completions")
       http = @connection_pool.get_connection(uri)
