@@ -1,11 +1,24 @@
 require "perplexity_api/version"
 require "perplexity_api/configuration"
 require "perplexity_api/models"
+require "perplexity_api/request_builder"
+require "perplexity_api/connection_pool"
 require "perplexity_api/client"
 require "perplexity_api/stream_client"
 
 module PerplexityApi
   class Error < StandardError; end
+  
+  # HTTP Status Code Constants
+  HTTP_STATUS_OK = 200
+  HTTP_STATUS_BAD_REQUEST = 400
+  HTTP_STATUS_UNAUTHORIZED = 401
+  HTTP_STATUS_FORBIDDEN = 403
+  HTTP_STATUS_NOT_FOUND = 404
+  HTTP_STATUS_RATE_LIMITED = 429
+  HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
+  HTTP_STATUS_BAD_GATEWAY = 502
+  HTTP_STATUS_SERVICE_UNAVAILABLE = 503
   
   # Helper method to create a client instance
   def self.new(api_key: nil, model: nil, options: {})
