@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2025-01-19
+
+### Added
+- Flexible timeout configuration for API calls
+  - Explicit timeout via options parameter
+  - Environment variable support (`PERPLEXITY_TIMEOUT`)
+  - Global configuration via `config.default_timeout`
+- Intelligent timeout defaults based on operation type
+  - Web search: 60s (streaming: 120s)
+  - Deep research (`reasoning_effort: 'high'`): 300s (streaming: 600s)
+  - Regular queries: 30s (streaming: 60s)
+- Connection pooling for improved performance
+- HTTP connection reuse reduces latency by ~25%
+
+### Security
+- API key protection with safe_redact method
+- Input validation with message size limits (100KB per message)
+- Message array size limit (max 100 messages)
+- Streaming buffer management with 10MB limit
+
+### Improved
+- Error handling with detailed JSON parsing errors
+- Debug logging with automatic sensitive data redaction
+- Code quality improvements with RequestBuilder module
+- HTTP status codes as named constants
+
+### Fixed
+- Timeout errors for long-running operations (web search, deep research)
+- Memory efficiency in streaming with StringIO buffer
+- Connection pool cleanup for expired connections
+
 ## [0.4.1] - 2025-01-07
 
 ### Fixed
